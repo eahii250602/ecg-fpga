@@ -1,0 +1,69 @@
+# ============================================================
+# .gitignore —— ECG-DDS-FPGA
+# 原则：只保留「人能读的源码 + 能重建工程的最小集合」，
+#       一切可由源码重新生成的产物都不入库。
+# ============================================================
+
+# ---------- Vivado 生成物 ----------
+vivado/ecg_system/ecg_system.runs/
+vivado/ecg_system/ecg_system.cache/
+vivado/ecg_system/ecg_system.gen/
+vivado/ecg_system/ecg_system.hw/
+vivado/ecg_system/ecg_system.ip_user_files/
+vivado/ecg_system/.Xil/
+vivado/dds_ecg_sim/**/sim_1/
+vivado/**/xsim.dir/
+vivado/**/.Xil/
+
+# ---------- 仿真波形与日志（体积大，可由 testbench 重新生成）----------
+*.vcd
+*.wdb
+*.wcfg
+*.jou
+*.log
+*.str
+*.pb
+*.rpx
+*.dcp
+*.vdi
+*.sveo
+*.backup.jou
+*.backup.log
+
+# ---------- 比特流：只保留 board/sd_upload 下唯一一份 ----------
+board/bit/
+board/backup/
+vivado/**/*.bit
+vivado/**/*.ltx
+
+# ---------- 备份与临时工作区 ----------
+_backup/
+_work/
+handoff.zip
+*.bak
+*.bak_*
+_dsh_write_test.txt
+ecg_new.txt
+
+# ---------- 板端采集的原始数据 ----------
+data/*.txt
+data/*.npy
+!data/README.md
+
+# ---------- Python ----------
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ---------- 二进制文档（用 markdown 版本代替）----------
+*.doc
+*.docx
+
+# ---------- 系统文件 ----------
+Thumbs.db
+desktop.ini
+.DS_Store
+
+vivado/NA/

@@ -1,0 +1,48 @@
+﻿
+****** xsim v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:02:23 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Sun Oct 11 13:16:12 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source xsim.dir/tb_sim/xsim_script.tcl
+# xsim {tb_sim} -autoloadwcfg -runall
+Time resolution is 1 ps
+run -all
+==================================================
+ AXI4-Lite slave testbench  (write/read protocol)
+==================================================
+[T1] reset ...
+     done. awready=0 wready=0
+[T2] read version @0x14
+  READ  0x14 = 0xec600001            version : PASS
+[T3] WRITE 0x00 = 52  (this is the key test)
+  WRITE 0x00 = 0x00000034   BRESP=00  OK
+     reg_ftw output =         52
+[T4] read back 0x00
+  READ  0x00 = 0x00000034       ftw readback : PASS
+[T5] write 0x04 = 123, then read back
+  WRITE 0x04 = 0x0000007b   BRESP=00  OK
+  READ  0x04 = 0x0000007b          wave_addr : PASS
+     reg_wave_addr output =        123
+[T6] read 0x08 (rr_count, expect 208)
+  READ  0x08 = 0x000000d0           rr_count : PASS
+[T7] read 0x0C (wave_data, expect -100)
+  READ  0x0c = 0xffffff9c          wave_data : PASS
+[T8] read 0x18 (out of range -> expect 0)
+  READ  0x18 = 0x00000000       out-of-range : PASS
+[T9] WRITE with AW-before-W ordering
+  WRITE(AW-first) 0x04 = 0x000000ab  BRESP=00  OK
+  READ  0x04 = 0x000000ab   awfirst readback : PASS
+[T10] WRITE with W-before-AW ordering (old code deadlocked here)
+  WRITE(W-first) 0x00 = 0x000000cd  BRESP=00  OK
+  READ  0x00 = 0x000000cd   irst correct reg : PASS
+  READ  0x04 = 0x000000ab    T9 value intact : PASS
+==================================================
+ ALL TESTS DONE (no timeout)  --> write channel OK
+==================================================
+$finish called at time : 745 ns : File "D:/ecg/sim/tb_ecg_axi_slave.v" Line 346
+exit
+INFO: [Common 17-206] Exiting xsim at Sun Oct 11 13:16:14 2026...

@@ -1,0 +1,64 @@
+{
+  "theory_rr_samples": 206.4888123076923,
+  "golden": {
+    "beats": 20,
+    "rr_intervals": [
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206
+    ],
+    "rr_mean": 206.47368421052633
+  },
+  "pt_noisy": {
+    "beats": 20,
+    "rr_intervals": [
+      206,
+      207,
+      206,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207,
+      206,
+      207
+    ],
+    "match_vs_golden_tol3": 20,
+    "match_rate_pct": 100.0
+  },
+  "pt_clean": {
+    "beats": 20,
+    "match_vs_golden_tol3": 20,
+    "match_rate_pct": 100.0
+  },
+  "fixed_threshold": {
+    "clean_detections": 20,
+    "noisy_detections": 22,
+    "note": "旧检测器在噪声下多检出 2 拍（误检）"
+  }
+}

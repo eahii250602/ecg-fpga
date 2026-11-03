@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+xadc_selftest.py —— XADC 内部通道自测（D1 上午验收工具）
+
+读 XADC 的通道，验证"ADC + AXI + Python"整条通路：
+    温度    (DRP 0x00) → 期望 30~60 ℃
+    VCCINT  (DRP 0x01) → 期望 1.00 V ±5%
+    VCCAUX  (DRP 0x02) → 期望 1.80 V ±5%
+    V_P/V_N (DRP 0x03) → 板外专用对（J5 脚1/脚2）；悬空时读数不确定（接信号后用万用表对比）
+    VAUX0   (DRP 0x10) → 辅助通道，PYNQ-Z2 上未接线，读数不作判据
+
+寄存器映射依据 Vivado XADC Wizard 模板 axi_xadc_vhd.ttcl：
+    0x00 SRR / 0x04 SR / 0x08 AOSR / 0x0C CONVSTR / 0x10 SYSMONRR
+    0x200 + 4*n = DRP 寄存器 n（12 位码值在 [15:4]）
+V_P/V_N=0x03、VAUX0=0x10 的通道号依据（D1 核对，待板上判别）：
+    xadc_wiz v3.3 自带测试台 tb_v.ttcl L5441/L5448（V_P/V_N → AXI 0x20C → DRP 0x03）
+    tb_v.ttcl L5459/L5466（VAUX0 → AXI 0x240 → DRP 0x10）
+    xgui 7 系列单通道表 L1216：TEMPERATURE,VCCINT,VCCAUX,VP_VN,…（VP_VN 排第 4 个）
+
+用法：
+    sudo -s
+    source /etc/profile.d/pynq_venv.sh
+    python3 xadc_selftest.py            # 默认基地址 0x43C10000
+    python3 xadc_selftest.py 0x43C10000 # 或显式指定（以 Address Editor 为准）
+"""
+import sys
+import os
+import time
+import mmap
+import struct
+
+DEFAULT_BASE = 0x43C10000          # ← 必须与 BD 里 Address Editor 分配的一致
+
+# DRP 地址
+DRP_TEMP   = 0x00
+DRP_VCCINT = 0x01
+DRP_VCCAUX = 0x02
+DRP_VP_VN  = 0x03                  # V_P/V_N 专用对（J5 脚1/脚2）；若实测稳定≈1.0V 则实为 VCCBRAM
+DRP_VAUX0  = 0x10                  # VAUX0 辅助通道（PYNQ-Z2 未接线，不作判据）
+
+REG_OFFSET_BASE = 0x200            # 0x200 + 4*n
+
+
+def rd32(m, off):
+    return struct.unpack("<I", m[off:off + 4])[0]
+
+
+def drp_code(m, addr):
+    """读某个 DRP 寄存器的 12 位转换码"""
+    return (rd32(m, REG_OFFSET_BASE + 4 * addr) >> 4) & 0xFFF
+
+
+def code_to_temp(code):
+    """XADC 温度公式：code × 503.975 / 4096 − 273.15 ℃"""
+    return code * 503.975 / 4096.0 - 273.15
+
+
+def code_to_volt_3v(code):
+    """VCCINT / VCCAUX 等内部电压通道：code × 3.0 / 4096"""
+    return code * 3.0 / 4096.0
+
+
+def code_to_volt_1v(code):
+    """单端模拟输入（V_P/V_N、VAUX）：code × 1.0 / 4096"""
+    return code * 1.0 / 4096.0
+
+
+def main():
+    base = int(sys.argv[1], 16) if len(sys.argv) > 1 else DEFAULT_BASE
+    print("=" * 64)
+    print(" XADC 自测  基地址 = 0x%08X" % base)
+    print("=" * 64)
+
+    fd = os.open("/dev/mem", os.O_RDWR | os.O_SYNC)
+    m = mmap.mmap(fd, 0x1000, mmap.MAP_SHARED,
+                  mmap.PROT_READ | mmap.PROT_WRITE, offset=base)
+    try:
+        print("\n[1] 控制寄存器")
+        print("    SR   (0x04) = 0x%08X" % rd32(m, 0x04))
+        print("    AOSR (0x08) = 0x%08X" % rd32(m, 0x08))
+
+        print("\n[2] 内部通道（等 300ms 让序列器转一圈）")
+        time.sleep(0.3)
+        results = []
+        for label, addr, conv, lo, hi, unit in (
+            ("温度  ", DRP_TEMP,   code_to_temp,     30.0,  60.0, "℃"),
+            ("VCCINT", DRP_VCCINT, code_to_volt_3v,  0.95,  1.05, "V"),
+            ("VCCAUX", DRP_VCCAUX, code_to_volt_3v,  1.71,  1.89, "V"),
+        ):
+            raw = rd32(m, REG_OFFSET_BASE + 4 * addr)
+            code = (raw >> 4) & 0xFFF
+            val = conv(code)
+            ok = lo <= val <= hi
+            results.append(ok)
+            print("    %-8s DRP0x%02X = 0x%08X  code=%4d  %8.3f %s  %s"
+                  % (label, addr, raw, code, val, unit,
+                     "OK" if ok else "★超范围★"))
+
+        print("\n[3] V_P/V_N（J5 专用对，DRP 0x03）与 VAUX0（DRP 0x10）通道判别")
+        # J5 未接线时的判别法：
+        #   0x03 读数乱跳/漂移  → 是悬空的 V_P/V_N（正常现象，证明映射对）
+        #   0x03 稳定在 ~1.00 V → 它其实是 VCCBRAM，V_P/V_N 的 DRP 编号需再查
+        for label, addr in (("V_P/VN", DRP_VP_VN), ("VAUX0 ", DRP_VAUX0)):
+            raw = rd32(m, REG_OFFSET_BASE + 4 * addr)
+            code = (raw >> 4) & 0xFFF
+            print("    %s DRP0x%02X = 0x%08X  code=%4d  %8.4f V"
+                  % (label, addr, raw, code, code_to_volt_1v(code)))
+
+        print("\n[4] 稳定性（连续 5 次，每次间隔 200ms，看温度/VCCINT 是否漂移）")
+        for i in range(5):
+            t = code_to_temp(drp_code(m, DRP_TEMP))
+            v = code_to_volt_3v(drp_code(m, DRP_VCCINT))
+            print("    #%d  T=%7.3f ℃   VCCINT=%.4f V" % (i + 1, t, v))
+            time.sleep(0.2)
+
+        print("\n" + "=" * 64)
+        if all(results):
+            print(" 结论：✅ XADC 通路正常（ADC + AXI 寄存器 + Python 读取全通）")
+        elif not any(results):
+            print(" 结论：❌ 全部为 0 —— 转换没启动。检查 XADC 向导里")
+            print("        Sequencer Mode 是否设为 Continuous、通道是否勾选。")
+        else:
+            print(" 结论：⚠ 部分通道异常，见上面标星的行")
+        print("=" * 64)
+    finally:
+        m.close()
+        os.close(fd)
+
+
+if __name__ == "__main__":
+    main()

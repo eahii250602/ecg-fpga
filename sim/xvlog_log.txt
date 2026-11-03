@@ -1,0 +1,4 @@
+﻿INFO: [VRFC 10-2263] Analyzing Verilog file "D:/ecg/sim/ecg_axi_slave_lite_v1_0_S00_AXI.v" into library work
+INFO: [VRFC 10-311] analyzing module ecg_axi_slave_lite_v1_0_S00_AXI
+INFO: [VRFC 10-2263] Analyzing Verilog file "D:/ecg/sim/tb_ecg_axi_slave.v" into library work
+INFO: [VRFC 10-311] analyzing module tb_ecg_axi_slave
