@@ -31,21 +31,21 @@ from pynq import Overlay, MMIO
 
 ECG = 0x43C00000
 FS = 250.0
-POLL = 0.8              # 刷新周期（秒）：0.8s 刷新一次，眼睛跟得上，不再一闪而过
+POLL = 0.25             # 刷新周期（秒）：0.25s 刷新一次、每次只跳 5 列 -> 平滑滚动
 BLOCKS = " ▁▂▃▄▅▆▇█"
 
 
 def term_size():
     try:
         s = os.get_terminal_size()
-        return max(40, min(s.columns - 1, 200)), max(5, min(s.lines - 5, 15))
+        return max(40, min(s.columns - 1, 220)), max(8, min(s.lines - 4, 20))
     except Exception:
         return 100, 9
 
 
 COLS, ROWS = term_size()
 PER = int(FS * POLL)          # 每次读的点数（100 点 = 0.4 秒）
-WIN = COLS * 8                # 窗口点数：每列 8 点 → 约 2.5 秒 / 3 个心搏
+WIN = COLS * 3                # 窗口点数：每列 3 点 -> 约 1.9 秒 / 2~3 个心搏，细节更密
 HIST = max(WIN, 800)
 
 
@@ -103,12 +103,8 @@ def render(hist, sqi, hr):
             lo, hi = (h, hp) if h <= hp else (hp, h)
             at_v = int(round(h)) == r
             flat = abs(h - hp) < 0.6
-            if at_v and flat:
-                buf.append("━")          # 平缓段：粗横线（细线看着太弱）
-            elif at_v:
-                buf.append("█")          # 顶点：实心块，最醒目
-            elif lo <= r + 0.5 <= hi:
-                buf.append("┃")          # 陡峭段：粗竖线
+            if at_v or (lo <= r + 0.5 <= hi):
+                buf.append("█")          # 一律用实心块：线条粗、边界清楚
             else:
                 buf.append(" ")
         lines.append("".join(buf))
