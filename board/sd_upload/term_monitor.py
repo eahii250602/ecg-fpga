@@ -121,16 +121,24 @@ def render(hist, sqi, hr):
 
 
 print("=" * 60)
-print("串口实时心电监视（Ctrl-C 退出）  终端 %d列×%d行" % (COLS, ROWS))
+print("串口实时心电监视（Ctrl-C 退出）  终端 %d列×%d行  模式=%s"
+      % (COLS, ROWS, "注入50Hz干扰" if (len(sys.argv) > 1 and sys.argv[1].lower() == "inj") else "无干扰"))
 print("=" * 60)
 
 o = Overlay("/boot/ecg_bd.bit")
 time.sleep(1.0)
 m = MMIO(ECG, 0x1000)
 print("版本 0x%08X" % m.read(0x14))
-m.write(0x10, 0x1)      # 缓冲存滤波后信号
+# 可选参数：python3 term_monitor.py inj  → 注入 50Hz 干扰
+INJ = len(sys.argv) > 1 and sys.argv[1].lower() == "inj"
+# 顺序不能反：0x00 在 bit3=1 时是主机样本，bit3=0 时才是 FTW
+m.write(0x10, 0x0)
+time.sleep(0.1)
 m.write(0x00, 83)       # DDS 72.5 BPM
-time.sleep(0.5)
+time.sleep(0.3)
+# bit0=缓冲存滤波后  bit2=注入使能  [23:8]=注入幅度
+m.write(0x10, 0x1 | (0x4 if INJ else 0) | ((600 << 8) if INJ else 0))
+time.sleep(1.5)
 
 T0 = time.time()
 hist = np.zeros(HIST, dtype=np.int16)
