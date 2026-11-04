@@ -7,8 +7,7 @@
       "name": "ecg_bd",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
       "synth_flow_mode": "None",
-      "tool_version": "2026.1",
-      "validated": "true"
+      "tool_version": "2026.1"
     },
     "design_tree": {
       "ps7": "",
@@ -1383,7 +1382,7 @@
         }
       },
       "ecg_axi_0": {
-        "vlnv": "xilinx.com:user:ecg_axi:1.0",
+        "vlnv": "xilinx.com:user:ecg_axi:1.1",
         "ip_revision": "1",
         "xci_name": "ecg_bd_ecg_axi_0_0",
         "xci_path": "ip\\ecg_bd_ecg_axi_0_0\\ecg_bd_ecg_axi_0_0.xci",
@@ -1985,11 +1984,11 @@
           "ps7/M_AXI_GP0_ACLK",
           "ps7_axi_periph/S00_ACLK",
           "rst_ps7_50M/slowest_sync_clk",
-          "ecg_axi_0/s00_axi_aclk",
           "ps7_axi_periph/M00_ACLK",
           "ps7_axi_periph/ACLK",
           "ps7_axi_periph/M01_ACLK",
-          "xadc_wiz_0/s_axi_aclk"
+          "xadc_wiz_0/s_axi_aclk",
+          "ecg_axi_0/s00_axi_aclk"
         ]
       },
       "ps7_FCLK_RESET0_N": {
@@ -2002,11 +2001,11 @@
         "ports": [
           "rst_ps7_50M/peripheral_aresetn",
           "ps7_axi_periph/S00_ARESETN",
-          "ecg_axi_0/s00_axi_aresetn",
           "ps7_axi_periph/M00_ARESETN",
           "ps7_axi_periph/ARESETN",
           "ps7_axi_periph/M01_ARESETN",
-          "xadc_wiz_0/s_axi_aresetn"
+          "xadc_wiz_0/s_axi_aresetn",
+          "ecg_axi_0/s00_axi_aresetn"
         ]
       }
     },

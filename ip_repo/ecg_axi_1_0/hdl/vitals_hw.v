@@ -141,9 +141,14 @@ module vitals_hw (
             case (hs)
             3'd0: if (det_pulse && !hrv_ready) begin
                       if (skip_cnt < 4'd2) begin
-                          // clear 后前 2 拍：只建立参考，不累加（避开陈旧 RR）
+                          // clear 后前 2 拍：只数拍，不累加（避开陈旧 RR）
+                          // 注意：这里【不能】给 rr_ref 赋值 —— 前 2 拍的 rr_samples
+                          // 可能是复位后的 0，一旦把 rr_ref 写成 0，rr_ok 会对所有
+                          // 正数恒为 false，导致此后每一拍都被剔除、n 永远为 0。
                           skip_cnt <= skip_cnt + 4'd1;
-                          rr_ref   <= rr_samples;
+                      end else if (rr_ref == 16'd0) begin
+                          // 跳过阶段之后，用第一个有效值建立参考（这一拍不计入统计）
+                          if (rr_samples != 16'd0) rr_ref <= rr_samples;
                       end else if (rr_samples == 16'd0 || !rr_ok) begin
                           // 异位搏动 / 漏检：剔除并计数（HRV 分析的标准前置步骤）
                           rej_cnt <= rej_cnt + 16'd1;

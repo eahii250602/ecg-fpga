@@ -208,7 +208,7 @@
                 "SX": "/ecg_axi_0",
                 "SI": "S00_AXI",
                 "SS": "S00_AXI_reg",
-                "SV": "xilinx.com:user:ecg_axi:1.0",
+                "SV": "xilinx.com:user:ecg_axi:1.1",
                 "TM": "both",
                 "TU": "register"
             },

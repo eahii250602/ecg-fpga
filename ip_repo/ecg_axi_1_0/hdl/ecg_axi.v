@@ -389,6 +389,41 @@
 	// ---- 读出的数据送到 AXI 从机（Python 读 0x0C）----
 	assign wave_data_to_axi = vreg_sel ? vreg_data : wave_mem_rd;
 
+	// ============================================================
+	// 【v6b】AXI-Stream 采样输出（250 Hz，供 AXI DMA 的 S2MM 通道）
+	//
+	// 握手铁律：
+	//   R1 传输成立 ⟺ tvalid && tready 同一拍为 1
+	//   R2 tvalid 不得依赖 tready（本实现的 tvalid 只由 sample_tick/tready 历史决定）
+	//   R3 tvalid=1 且 tready=0 时 tdata 必须保持不变
+	//
+	// 分支 ② 就是为守 R3 而设：上一拍没取走时，本次采样丢弃而不是覆盖 tdata。
+	// 被丢弃的样本计入 axis_drop_cnt —— **丢弃必须可见**，否则无法区分
+	// "没丢" 与 "丢了但没人知道"。
+	// ============================================================
+	reg [15:0] axis_tdata_r;
+	reg        axis_tvalid_r;
+	reg [31:0] axis_drop;
+
+	always @(posedge s00_axi_aclk) begin
+		if (!s00_axi_aresetn) begin
+			axis_tdata_r  <= 16'd0;
+			axis_tvalid_r <= 1'b0;
+			axis_drop     <= 32'd0;
+		end else if (sample_tick && (!axis_tvalid_r || m_axis_tready)) begin
+			axis_tdata_r  <= buf_in;
+			axis_tvalid_r <= 1'b1;
+		end else if (sample_tick && axis_tvalid_r && !m_axis_tready) begin
+			axis_drop     <= axis_drop + 32'd1;
+		end else if (axis_tvalid_r && m_axis_tready) begin
+			axis_tvalid_r <= 1'b0;
+		end
+	end
+
+	assign m_axis_tdata  = axis_tdata_r;
+	assign m_axis_tvalid = axis_tvalid_r;
+	assign axis_drop_cnt = axis_drop;
+
 	endmodule
 
 	// ============================================================
