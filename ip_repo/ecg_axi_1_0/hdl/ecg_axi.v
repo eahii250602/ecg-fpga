@@ -258,6 +258,37 @@
 	assign rr_pt_to_axi   = {16'd0, pt_rr_last};
 	assign det_cnt_to_axi = pt_det_cnt;
 
+	// ============================================================
+	// 【v6a】生理量硬件统计：信号质量（SQI）+ 心率变异性（HRV）
+	//   clear 由 0x10.bit4 控制（PS 读完后清零累加器）
+	//   输出经"虚拟寄存器"暴露：写 0x04 = 0x400 + idx，再读 0x0C
+	// ============================================================
+	wire [1:0]  sqi_level_hw;
+	wire [31:0] acc_in_hw, acc_out_hw;
+	wire [15:0] hrv_n_hw;
+	wire [31:0] hrv_sum_rr_hw;
+	wire [31:0] hrv_sum_rr2_hw, hrv_sum_drr2_hw;
+	wire        hrv_ready_hw;
+
+	vitals_hw u_vitals (
+		.clk          (s00_axi_aclk),
+		.rst          (~s00_axi_aresetn),
+		.sample_tick  (sample_tick),
+		.x_in         (ecg_mix),
+		.x_out        (ecg_filt_out),
+		.det_pulse    (r_detect_pt),
+		.rr_samples   (pt_rr_last),
+		.clear        (filt_ctl_from_axi[4]),
+		.sqi_level    (sqi_level_hw),
+		.acc_in_q     (acc_in_hw),
+		.acc_out_q    (acc_out_hw),
+		.hrv_n        (hrv_n_hw),
+		.hrv_sum_rr   (hrv_sum_rr_hw),
+		.hrv_sum_rr2  (hrv_sum_rr2_hw),
+		.hrv_sum_drr2 (hrv_sum_drr2_hw),
+		.hrv_ready    (hrv_ready_hw)
+	);
+
 	// ★调试：记录"自上一采样拍以来是否发生过检测"，写入缓冲时打标（值 ≥0x80000000）
 	reg        pt_det_seen;
 	reg [15:0] pt_det_idx;
@@ -301,7 +332,7 @@
 	wire [WAVE_AW-1:0] wave_rd_addr = wave_addr_from_axi[WAVE_AW-1:0];
 
 	// ---- 同步读输出寄存器 ----
-	reg [31:0] wave_rd_data;
+	reg [31:0] wave_mem_rd;
 
 	// ---- 写指针：独立 always，带复位，每来一个采样节拍 +1 ----
 	always @(posedge s00_axi_aclk) begin
@@ -313,11 +344,32 @@
 	//      ★ 故意【不加复位】——这是 Vivado 推断 Block RAM 的标准模板
 	always @(posedge s00_axi_aclk) begin
 		if (sample_tick) wave_mem[wr_ptr] <= wave_wr_data;   // 写口（采样节拍写入）
-		wave_rd_data     <= wave_mem[wave_rd_addr];          // 读口（同步读 → 推断为 BRAM）
+		wave_mem_rd      <= wave_mem[wave_rd_addr];          // 读口（同步读 → 推断为 BRAM）
+	end
+
+	// ---- 【v6a】虚拟寄存器：wave_addr[10]=1 时，0x0C 返回统计量而非波形 ----
+	//   好处：不扩 AXI 地址宽度、不改 Block Design，用现有读通路即可访问新数据
+	//   Python 侧：mmio.write(0x04, 0x400 + idx); v = mmio.read(0x0C)
+	wire        vreg_sel = wave_addr_from_axi[10];
+	wire [3:0]  vreg_idx = wave_addr_from_axi[3:0];
+	reg  [31:0] vreg_data;
+
+	always @(*) begin
+		case (vreg_idx)
+			4'd0: vreg_data = {30'd0, sqi_level_hw};        // 质量等级 0~3
+			4'd1: vreg_data = {24'd0, hrv_n_hw};            // 窗口内 RR 个数
+			4'd2: vreg_data = hrv_sum_rr_hw;                // Σrr
+			4'd3: vreg_data = hrv_sum_rr2_hw;         // Σrr²
+			4'd4: vreg_data = hrv_sum_drr2_hw;        // ΣΔrr²
+			4'd5: vreg_data = {31'd0, hrv_ready_hw};        // 窗口已满标志
+			4'd6: vreg_data = acc_in_hw;              // 输入能量
+			4'd7: vreg_data = acc_out_hw;             // 滤波后能量
+			default: vreg_data = 32'd0;
+		endcase
 	end
 
 	// ---- 读出的数据送到 AXI 从机（Python 读 0x0C）----
-	assign wave_data_to_axi = wave_rd_data;
+	assign wave_data_to_axi = vreg_sel ? vreg_data : wave_mem_rd;
 
 	endmodule
 
