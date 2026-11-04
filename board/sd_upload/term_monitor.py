@@ -143,7 +143,10 @@ time.sleep(0.1)
 m.write(0x00, 83)       # DDS 72.5 BPM
 time.sleep(0.3)
 # bit0=缓冲存滤波后  bit2=注入使能  [23:8]=注入幅度
-if REAL:\n    m.write(0x10, 0x9)          # bit3=主机样本模式, bit0=缓冲存滤波后\nelse:\n    m.write(0x10, 0x1 | (0x4 if INJ else 0) | ((600 << 8) if INJ else 0))
+if REAL:
+    m.write(0x10, 0x9)          # bit3=主机样本模式, bit0=缓冲存滤波后
+else:
+    m.write(0x10, 0x1 | (0x4 if INJ else 0) | ((600 << 8) if INJ else 0))
 time.sleep(1.5)
 
 T0 = time.time()
