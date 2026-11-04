@@ -606,14 +606,27 @@ module pt_chain(
 
                     if (cand_active) begin
                         if (cand_age == 6'd0) begin
-                            r_detect <= 1'b1;
-                            if (cand_idx >= 16'd51)
-                                r_index <= cand_idx - 16'd50;
-                            else
-                                r_index <= 16'd0;
-                            last_r <= cand_idx;
-                            spki   <= spki + ((cand_val - spki) >>> 3);
-                            cand_active <= 1'b0;
+                            // ---- 【T 波判别】2026-11-04 ----
+                            // 现象：145 BPM 时心率恰好翻倍（实测 145.00 vs 设定 72.5）。
+                            // 原因：DDS 波形在高心率下被时间压缩，T 波斜率翻倍、
+                            //       微分平方后能量涨 4 倍，越过 th1_w；
+                            //       而 T 波位于 R 之后 93 采样，固定的 50 采样不响应期挡不住。
+                            // 依据：Pan-Tompkins 原论文的 T 波判别——候选能量不到前一个 R 的
+                            //       一半即判为 T 波。R 与 T 的能量比在不同心率下基本恒定
+                            //       （同比例压缩），故该判据不随心率失效，而固定不响应期会。
+                            if (cand_val < (spki >> 1)) begin
+                                npki <= npki + ((cand_val - npki) >>> 3);  // 计入噪声水平
+                                cand_active <= 1'b0;                       // 丢弃，不产生 r_detect
+                            end else begin
+                                r_detect <= 1'b1;
+                                if (cand_idx >= 16'd51)
+                                    r_index <= cand_idx - 16'd50;
+                                else
+                                    r_index <= 16'd0;
+                                last_r <= cand_idx;
+                                spki   <= spki + ((cand_val - spki) >>> 3);
+                                cand_active <= 1'b0;
+                            end
                         end
                         else begin
                             cand_age <= cand_age - 6'd1;
