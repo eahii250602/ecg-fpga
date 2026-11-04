@@ -129,7 +129,12 @@ time.sleep(0.5)
 # 状态 A：无干扰
 a, sqi_a, keep_a = panel(m, "状态 A：无干扰（仅心电）", 0x1, G, "A")
 # 状态 B：注入 50Hz 600 LSB
-b, sqi_b, keep_b = panel(m, "状态 B：注入 50 Hz 工频（600 LSB）", 0x1 | (600 << 8), Y, "B")
+# ★ 控制字：bit0=缓冲存滤波后  bit2=注入使能  [23:8]=注入幅度
+#   上一版漏了 bit2，导致只设幅度而注入器未启动，状态 B 仍是 3 级。
+CTL_BUF = 0x1
+CTL_INJ = 0x4
+b, sqi_b, keep_b = panel(m, "状态 B：注入 50 Hz 工频（600 LSB）",
+                         CTL_BUF | CTL_INJ | (600 << 8), Y, "B")
 
 sys.stdout.write("\033[2J\033[H")
 print("=" * (COLS + 2))
