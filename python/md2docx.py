@@ -9,9 +9,9 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
-MD = r"D:\ecg\docs\技术文档.md"
+MD = r"D:\ecg\docs\design_report.md"
 FIG = r"D:\ecg\report\figs"
-OUT = r"D:\ecg\docs\心衡_技术文档.docx"
+OUT = r"D:\ecg\docs\design_report.docx"
 
 # 各章节末尾插入的图
 INSERTS = {

@@ -197,22 +197,6 @@
 对"创新"的理解亦在过程中改变。起初以为创新是增加功能，后来发现真正的创新是**把踩过的坑变成他人需要的能力**：因为反复将噪声误判为心电，才有了硬件信号质量评估；因为单条导联信息利用率过低，才有了心率、心率变异性与呼吸率的并行提取。对"完成"的理解同样改变：项目中主动放弃了若干方案，每一次放弃都不是能力不足，而是算过账之后的取舍。**能把"为什么没有选择另一个方案"说清楚，比"做了什么"更难。**
 
 若要为这段经历下一句总结：**工程能力的分水岭，不在于能否写出可以运行的代码，而在于能否在下结论之前，先为这个结论准备好被推翻的证据。**
-# 第五部分　参考文献
-
-[1] Pan J, Tompkins W J. A QRS Detection Algorithm[J]. IEEE Transactions on Biomedical Engineering, 1985, 32(3): 230-236.
-
-[2] Malik M, Bigger J T, Camm A J, et al. Heart Rate Variability: Standards of Measurement, Physiological Interpretation, and Clinical Use[J]. Circulation, 1996, 93(5): 1043-1065.
-
-[3] Bailón R, Sörnmo L, Laguna P. ECG-Derived Respiratory Frequency Estimation[M]//Clifford G D, Azuaje F, McSharry P E. Advanced Methods and Tools for ECG Data Analysis. Boston: Artech House, 2006: 215-244.
-
-[4] Xilinx. 7 Series FPGAs and Zynq-7000 All Programmable SoC XADC Dual 12-Bit 1 MSPS Analog-to-Digital Converter User Guide: UG480[S]. 2022.
-
-[5] Xilinx. AXI DMA v7.1 LogiCORE IP Product Guide: PG021[S]. 2022.
-
-[6] Analog Devices. AD8232 Single-Lead, Heart Rate Monitor Front End Data Sheet[S]. Norwood: Analog Devices, 2012.
-
----
-
 ## 4.3 技能包的提炼过程（补充）
 
 本项目的技能包（`skill/`）不是事后总结，而是开发过程中「每次踩坑后立即写下」积累而成。
@@ -230,3 +214,19 @@
 例如 MD5 校验只在已知期望版本值时有意义；
 能量判别建立在「R 与 T 的能量比在不同心率下基本恒定」这一前提上，
 心率极端变化时需重新取样确认。
+
+---
+
+# 第五部分　参考文献
+
+[1] Pan J, Tompkins W J. A QRS Detection Algorithm[J]. IEEE Transactions on Biomedical Engineering, 1985, 32(3): 230-236.
+
+[2] Malik M, Bigger J T, Camm A J, et al. Heart Rate Variability: Standards of Measurement, Physiological Interpretation, and Clinical Use[J]. Circulation, 1996, 93(5): 1043-1065.
+
+[3] Bailón R, Sörnmo L, Laguna P. ECG-Derived Respiratory Frequency Estimation[M]//Clifford G D, Azuaje F, McSharry P E. Advanced Methods and Tools for ECG Data Analysis. Boston: Artech House, 2006: 215-244.
+
+[4] Xilinx. 7 Series FPGAs and Zynq-7000 All Programmable SoC XADC Dual 12-Bit 1 MSPS Analog-to-Digital Converter User Guide: UG480[S]. 2022.
+
+[5] Xilinx. AXI DMA v7.1 LogiCORE IP Product Guide: PG021[S]. 2022.
+
+[6] Analog Devices. AD8232 Single-Lead, Heart Rate Monitor Front End Data Sheet[S]. Norwood: Analog Devices, 2012.
