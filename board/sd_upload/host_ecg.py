@@ -50,7 +50,7 @@ BIT_INJ  = 1 << 2
 BIT_HOST = 1 << 3      # v5：主机样本模式
 
 DEPTH = 1024
-VERSION_EXPECT = 0xEC600005
+VERSION_EXPECT = 0xEC600006
 BITSTREAM = "/boot/ecg_bd.bit"
 
 

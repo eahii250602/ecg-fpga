@@ -51,7 +51,7 @@ BIT_PT  = 1 << 1
 BIT_INJ = 1 << 2
 
 BITSTREAM = "/boot/ecg_bd.bit"  # ★必须用 /boot 下这份（/home/xilinx 下是旧版 v2）
-VERSION_EXPECT = 0xEC600005
+VERSION_EXPECT = 0xEC600006
 
 
 def to_signed32(v):

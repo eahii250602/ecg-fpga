@@ -90,11 +90,14 @@ def main():
     print("[B] HRV 累加（判据：恒定心率下几何恒等式误差为 0）")
     print("-" * 66)
 
-    m.write(REG_CTL, BIT_INJ | (1 << 4))       # 保持注入 + clear 累加器
-    time.sleep(0.2)
-    m.write(REG_CTL, BIT_INJ)                  # 放开 clear
-    m.write(REG_FTW, 206)                      # 179.9 BPM → 64 个间期约 21 秒
-    print("    设置 FTW=206（179.9 BPM），等待 64 个 RR 间期（约 22 秒）...")
+    # ★2026-11-04 修正：原用例同时开着 50Hz 注入与 FTW=206（180 BPM），
+    #   心电峰值 2047 叠加 600 注入后 12 位饱和削顶，PT 无法检测 → det_cnt 不涨 → n=0。
+    #   现改为：关闭注入、用 FTW=166（145 BPM，RR=104），64 拍约 27 秒。
+    m.write(REG_CTL, 1 << 4)                   # 只置 clear
+    time.sleep(0.3)
+    m.write(REG_CTL, 0)                        # 放开 clear，无注入
+    m.write(REG_FTW, 166)                      # 145 BPM
+    print("    设置 FTW=166（145 BPM，无注入），等待 64 个 RR 间期（约 27 秒）...")
 
     t0 = time.time()
     while time.time() - t0 < 40:
