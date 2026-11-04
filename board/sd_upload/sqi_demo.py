@@ -123,8 +123,18 @@ o = Overlay("/boot/ecg_bd.bit")
 time.sleep(1.0)
 m = MMIO(ECG, 0x1000)
 print("  版本 0x%08X" % m.read(0x14))
-m.write(0x00, 83)                 # DDS 72.5 BPM
+# ★ 顺序不能反：0x00 是双用途寄存器（bit3=1 时为主机样本，bit3=0 时才是 FTW）。
+#   若上一次测试残留 bit3=1，先写 0x00 会把 83 当成一个样本写掉，FTW 仍为 0，
+#   DDS 因此输出恒 0、波形全零。故必须先清控制字，再写频率字。
+m.write(0x10, 0x0)                # 先退出主机样本模式（bit3=0）
+time.sleep(0.1)
+m.write(0x00, 83)                 # 再写 FTW = 72.5 BPM
 time.sleep(0.5)
+# 自检：确认 DDS 已在出波形（检测计数应随时间增长）
+d0 = m.read(0x1C)
+time.sleep(0.5)
+d1 = m.read(0x1C)
+print("  自检：FTW=83，0.5 秒内检测数 %d -> %d" % (d0, d1))
 
 # 状态 A：无干扰
 a, sqi_a, keep_a = panel(m, "状态 A：无干扰（仅心电）", 0x1, G, "A")
