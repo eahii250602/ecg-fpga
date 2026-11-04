@@ -3,7 +3,7 @@
 Jun 16 2026
 11:10:11
 D:/ecg/ip_repo/ecg_axi_1_0/hdl/dds_ecg.v,1791209193,verilog,,D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_axi.v,,dds_ecg,,,.,,,,,
-D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_axi.v,1793755593,verilog,,D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_axi_slave_lite_v1_0_S00_AXI.v,,ecg_axi;pt_chain,,,.,,,,,
+D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_axi.v,1793758096,verilog,,D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_axi_slave_lite_v1_0_S00_AXI.v,,ecg_axi;pt_chain,,,.,,,,,
 D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_axi_slave_lite_v1_0_S00_AXI.v,1793754943,verilog,,D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_filt.v,,ecg_axi_slave_lite_v1_0_S00_AXI,,,.,,,,,
 D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_filt.v,1793700434,verilog,,D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_rom.v,,ecg_filt,,,.,,,,,
 D:/ecg/ip_repo/ecg_axi_1_0/hdl/ecg_rom.v,1791380152,verilog,,D:/ecg/ip_repo/ecg_axi_1_0/hdl/noise50.v,,ecg_rom,,,.,,,,,
@@ -11,4 +11,4 @@ D:/ecg/ip_repo/ecg_axi_1_0/hdl/noise50.v,1793701777,verilog,,D:/ecg/ip_repo/ecg_
 D:/ecg/ip_repo/ecg_axi_1_0/hdl/r_detect.v,1791192877,verilog,,D:/ecg/ip_repo/ecg_axi_1_0/hdl/tick_gen.v,,r_detect,,,.,,,,,
 D:/ecg/ip_repo/ecg_axi_1_0/hdl/rr_counter.v,1791199848,verilog,,D:/ecg/ip_repo/ecg_axi_1_0/hdl/r_detect.v,,rr_counter,,,.,,,,,
 D:/ecg/ip_repo/ecg_axi_1_0/hdl/tick_gen.v,1791209174,verilog,,D:/ecg/ip_repo/ecg_axi_1_0/hdl/vitals_hw.v,,tick_gen,,,.,,,,,
-D:/ecg/ip_repo/ecg_axi_1_0/hdl/vitals_hw.v,1793754751,verilog,,,,vitals_hw,,,.,,,,,
+D:/ecg/ip_repo/ecg_axi_1_0/hdl/vitals_hw.v,1793757044,verilog,,,,vitals_hw,,,.,,,,,

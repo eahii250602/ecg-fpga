@@ -50,7 +50,15 @@
 		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_rdata,
 		output wire [1 : 0] s00_axi_rresp,
 		output wire  s00_axi_rvalid,
-		input wire  s00_axi_rready
+		input wire  s00_axi_rready,
+
+		// ---- 【v6b】AXI-Stream 主口：每个采样节拍送出一个样本给 AXI DMA ----
+		//   用流而非寄存器：逐样本的顺序数据天然是流式语义；寄存器轮询每样本
+		//   一次总线事务，且采样时刻由软件决定（见 docs/v6_plan.md §六）
+		output wire [15:0] m_axis_tdata,
+		output wire        m_axis_tvalid,
+		input  wire        m_axis_tready,
+		output wire [31:0] axis_drop_cnt
 	);
 
 	// ============================================================
@@ -269,6 +277,8 @@
 	wire [31:0] hrv_sum_rr_hw;
 	wire [31:0] hrv_sum_rr2_hw, hrv_sum_drr2_hw;
 	wire        hrv_ready_hw;
+	wire [15:0] dbg_last_hw, dbg_min_hw, dbg_max_hw;
+	wire [15:0] hrv_rej_hw;
 
 	vitals_hw u_vitals (
 		.clk          (s00_axi_aclk),
@@ -286,7 +296,11 @@
 		.hrv_sum_rr   (hrv_sum_rr_hw),
 		.hrv_sum_rr2  (hrv_sum_rr2_hw),
 		.hrv_sum_drr2 (hrv_sum_drr2_hw),
-		.hrv_ready    (hrv_ready_hw)
+		.hrv_ready    (hrv_ready_hw),
+		.dbg_last     (dbg_last_hw),
+		.dbg_min      (dbg_min_hw),
+		.dbg_max      (dbg_max_hw),
+		.hrv_rej_cnt  (hrv_rej_hw)
 	);
 
 	// ★调试：记录"自上一采样拍以来是否发生过检测"，写入缓冲时打标（值 ≥0x80000000）
@@ -364,6 +378,10 @@
 			4'd5: vreg_data = {31'd0, hrv_ready_hw};        // 窗口已满标志
 			4'd6: vreg_data = acc_in_hw;              // 输入能量
 			4'd7: vreg_data = acc_out_hw;             // 滤波后能量
+			4'd8: vreg_data = {16'd0, dbg_last_hw};  // 调试：最后一次累加的 rr
+			4'd9: vreg_data = {16'd0, dbg_min_hw};   // 调试：累加过的最小 rr
+			4'd10: vreg_data = {16'd0, dbg_max_hw};  // 调试：累加过的最大 rr
+			4'd11: vreg_data = {16'd0, hrv_rej_hw};  // 被剔除的异常拍数
 			default: vreg_data = 32'd0;
 		endcase
 	end

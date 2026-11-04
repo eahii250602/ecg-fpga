@@ -36,7 +36,11 @@ module vitals_hw (
     output reg  [31:0]        hrv_sum_rr,
     output reg  [31:0]        hrv_sum_rr2,
     output reg  [31:0]        hrv_sum_drr2,
-    output reg                hrv_ready
+    output reg                hrv_ready,
+    output reg  [15:0]        dbg_last,
+    output reg  [15:0]        dbg_min,
+    output reg  [15:0]        dbg_max,
+    output reg  [15:0]        hrv_rej_cnt
 );
 
     // ------------------------------------------------------------
@@ -118,7 +122,10 @@ module vitals_hw (
     reg [31:0] rr2_r, dsq_r;
     reg [15:0] rr_prev;
     reg        rr_prev_vld;
-    reg [2:0]  octl;
+    reg [15:0] rr_ref;      // 已接受 RR 的参考值（初始取第一个有效值）
+    reg [3:0]  skip_cnt;    // clear 后前 2 拍不累加（避免陈旧值）
+    reg [15:0] rej_cnt;     // 被剔除的拍数
+    wire       rr_ok   = (rr_samples * 2 >= rr_ref) && (rr_samples <= rr_ref * 2);
 
     wire signed [16:0] d_new = $signed({1'b0, rr_samples}) - $signed({1'b0, rr_prev});
 
@@ -128,15 +135,29 @@ module vitals_hw (
             rr2_r <= 0; dsq_r <= 0;
             hrv_n <= 0; hrv_sum_rr <= 0; hrv_sum_rr2 <= 0; hrv_sum_drr2 <= 0;
             hrv_ready <= 0; rr_prev <= 0; rr_prev_vld <= 0;
+            dbg_last <= 0; dbg_min <= 16'hFFFF; dbg_max <= 16'd0;
+            rr_ref <= 16'd0; skip_cnt <= 4'd0; rej_cnt <= 16'd0;
         end else begin
             case (hs)
-            3'd0: if (det_pulse && !hrv_ready && rr_samples != 16'd0) begin
-                      rr_lat <= rr_samples;
-                      d_r    <= rr_prev_vld ? d_new : 17'sd0;
-                      rr2_r  <= rr_samples * rr_samples;        // DSP
-                      rr_prev <= rr_samples;
-                      rr_prev_vld <= 1'b1;
-                      hs <= 3'd1;
+            3'd0: if (det_pulse && !hrv_ready) begin
+                      if (skip_cnt < 4'd2) begin
+                          // clear 后前 2 拍：只建立参考，不累加（避开陈旧 RR）
+                          skip_cnt <= skip_cnt + 4'd1;
+                          rr_ref   <= rr_samples;
+                      end else if (rr_samples == 16'd0 || !rr_ok) begin
+                          // 异位搏动 / 漏检：剔除并计数（HRV 分析的标准前置步骤）
+                          rej_cnt <= rej_cnt + 16'd1;
+                      end else begin
+                          rr_lat <= rr_samples;
+                          d_r    <= rr_prev_vld ? d_new : 17'sd0;
+                          rr2_r  <= rr_samples * rr_samples;   // DSP
+                          rr_prev <= rr_samples;
+                          rr_prev_vld <= 1'b1;
+                          dbg_last <= rr_samples;
+                          if (rr_samples < dbg_min) dbg_min <= rr_samples;
+                          if (rr_samples > dbg_max) dbg_max <= rr_samples;
+                          hs <= 3'd1;
+                      end
                   end
             3'd1: begin
                       d_abs <= d_r[16] ? (~d_r + 17'd1) : d_r;  // |d|
@@ -159,4 +180,6 @@ module vitals_hw (
         end
     end
 
+
+    always @(posedge clk) if (rst || clear) hrv_rej_cnt <= 16'd0; else hrv_rej_cnt <= rej_cnt;
 endmodule
