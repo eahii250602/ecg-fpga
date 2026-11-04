@@ -128,16 +128,22 @@ print("=" * 60)
 o = Overlay("/boot/ecg_bd.bit")
 time.sleep(1.0)
 m = MMIO(ECG, 0x1000)
+xadc = MMIO(0x43C10000, 0x1000)
 print("版本 0x%08X" % m.read(0x14))
-# 可选参数：python3 term_monitor.py inj  → 注入 50Hz 干扰
-INJ = len(sys.argv) > 1 and sys.argv[1].lower() == "inj"
+# 可选参数：
+#   python3 term_monitor.py           → DDS 合成波形
+#   python3 term_monitor.py inj       → DDS + 50Hz 注入
+#   python3 term_monitor.py real      → 真实心电（读 XADC 走主机样本通道）
+ARG = sys.argv[1].lower() if len(sys.argv) > 1 else ""
+INJ = (ARG == "inj")
+REAL = (ARG == "real")
 # 顺序不能反：0x00 在 bit3=1 时是主机样本，bit3=0 时才是 FTW
 m.write(0x10, 0x0)
 time.sleep(0.1)
 m.write(0x00, 83)       # DDS 72.5 BPM
 time.sleep(0.3)
 # bit0=缓冲存滤波后  bit2=注入使能  [23:8]=注入幅度
-m.write(0x10, 0x1 | (0x4 if INJ else 0) | ((600 << 8) if INJ else 0))
+if REAL:\n    m.write(0x10, 0x9)          # bit3=主机样本模式, bit0=缓冲存滤波后\nelse:\n    m.write(0x10, 0x1 | (0x4 if INJ else 0) | ((600 << 8) if INJ else 0))
 time.sleep(1.5)
 
 T0 = time.time()
@@ -148,6 +154,9 @@ try:
     while True:
         new = np.empty(PER, dtype=np.int16)
         for k in range(PER):
+            if REAL:
+                # 主机样本模式：读 XADC（VP/VN，偏移 0x20C）→ 写 0x00 推入硬件链
+                m.write(0x00, (xadc.read(0x20C) >> 4) & 0xFFF)
             m.write(0x04, addr & 0x3FF)
             new[k] = (m.read(0x0C) & 0xFFFF) - 2048
             addr += 1
