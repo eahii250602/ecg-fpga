@@ -342,6 +342,91 @@ ecg/
 
 ---
 
-## 9. 许可
+---
+
+## 8.1 与官方推荐目录的对照
+
+竞赛指南推荐 `src/ sim/ build/ board/ data/ skill/ report/`，本仓库按实际工程组织方式
+调整如下（指南允许，但要求在 README 给出对照）：
+
+| 官方推荐目录 | 本仓库对应位置 | 说明 |
+|---|---|---|
+| `src/`（设计源码） | `ip_repo/ecg_axi_1_0/hdl/`、`vivado_src/` | RTL 源码，9 个模块 1687 行 |
+| `sim/`（仿真） | `sim/` | testbench、定点模型、逐位对账结果 |
+| `build/`（构建与报告） | `vivado/*.tcl`、`report/*.rpt` | Tcl 构建脚本 + Vivado 综合实现报告 |
+| `board/`（上板） | `board/sd_upload/` | 27 个板端脚本 + 比特流 + hwh |
+| `data/`（测试数据） | `python/*.coe`、`sim/*/out/`、`report/figs/` | 心电模板、黄金参考、实测波形 |
+| `skill/`（技能包） | `skill/` | 见 `skill/README.md` |
+| `report/`（报告） | `docs/`、`report/` | 设计报告 `docs/design_report.pdf`；协作记录 `docs/llm-collab.md`；开发日志 `report/worklog.md` |
+
+---
+
+## 9. 复现步骤（从零开始）
+
+### 9.1 环境
+
+| 项 | 版本 |
+|---|---|
+| 开发板 | AMD PYNQ-Z2（Zynq-7000 **XC7Z020CLG400-1**） |
+| EDA 工具 | **Vivado 2026.1** |
+| 板端系统 | PYNQ 2.7（Linux 5.15） |
+| 主机 Python | 3.10+（numpy） |
+
+### 9.2 重建硬件
+
+```bash
+# 阶段 1：清缓存并综合
+vivado -mode batch -source vivado/rebuild_phase1.tcl
+
+# 阶段 2：实现并导出比特流
+vivado -mode batch -source vivado/rebuild_phase2.tcl
+```
+
+产物：`board/sd_upload/ecg_bd.bit` 与 `ecg_bd.hwh`（两者必须同名同目录）。
+
+> **注意**：`.gen / .runs` 等构建产物已排除在仓库外，必须由上述脚本重建。
+
+### 9.3 部署到板子
+
+1. 把 `board/sd_upload/` 下的全部文件拷到 SD 卡根目录；
+2. 插卡上电，串口 115200 连接，登录 `xilinx`；
+3. `sudo -s` 后执行验证脚本。
+
+### 9.4 逐项验证（每项都有判据）
+
+| 顺序 | 命令 | 通过判据 |
+|---|---|---|
+| 1 | `python3 /boot/xadc_selftest.py` | 读到 XADC 通道数据，非 0 / 非 4095 |
+| 2 | `python3 /boot/filt_check.py` | 抑制比优于 −60 dB |
+| 3 | `python3 /boot/rate_check.py` | 采样率 250.00 Hz，误差 < 0.5% |
+| 4 | `python3 /boot/pt_check.py` | R 峰间隔与理论值偏差 ≤ 1 采样点 |
+| 5 | `python3 /boot/vitals_check.py` | HRV `n ≥ 60`、剔除 ≤ 5 |
+| 6 | `python3 /boot/dma_check.py` | 500 样本连续恢复，峰值接近 4095 |
+| 7 | `python3 /boot/term_monitor.py` | 终端出现有节律的心电波形 |
+
+### 9.5 仿真复现
+
+```bash
+cd sim/vitals
+xvlog ../vitals_hw.v tb_vitals.v
+xelab -debug typical tb_vitals -s tb_vitals_sim
+xsim tb_vitals_sim -R
+```
+
+**通过判据**：输出 `PASS`，且 `n=22`、`sum_rr=4554`、`sum_drr2=0`、`min/max=207`。
+
+---
+
+## 10. 器件与工具声明
+
+- **器件型号**：AMD Zynq-7000 **XC7Z020CLG400-1**（PYNQ-Z2 板载）
+- **实际主时钟**：**62.5 MHz**（由 `BOOT.BIN` 中的 `ps7_init` 决定，非 Block Design 的配置值 100 MHz）
+- **EDA 版本**：Vivado **2026.1**
+- **是否使用大模型**：是，协作记录见 `docs/llm-collab.md`，可复用经验见 `skill/`
+- **板上实测**：全部指标均为板上实测值，非仿真推算
+
+---
+
+## 11. 许可
 
 MIT License，见 [LICENSE](LICENSE)。
