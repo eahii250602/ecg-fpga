@@ -1,10 +1,9 @@
 # ============================================================
-# .gitignore —— ECG-DDS-FPGA
-# 原则：只保留「人能读的源码 + 能重建工程的最小集合」，
-#       一切可由源码重新生成的产物都不入库。
-# ============================================================
+# .gitignore 鈥斺€?ECG-DDS-FPGA
+# 鍘熷垯锛氬彧淇濈暀銆屼汉鑳借鐨勬簮鐮?+ 鑳介噸寤哄伐绋嬬殑鏈€灏忛泦鍚堛€嶏紝
+#       涓€鍒囧彲鐢辨簮鐮侀噸鏂扮敓鎴愮殑浜х墿閮戒笉鍏ュ簱銆?# ============================================================
 
-# ---------- Vivado 生成物 ----------
+# ---------- Vivado 鐢熸垚鐗?----------
 vivado/ecg_system/ecg_system.runs/
 vivado/ecg_system/ecg_system.cache/
 vivado/ecg_system/ecg_system.gen/
@@ -15,7 +14,7 @@ vivado/dds_ecg_sim/**/sim_1/
 vivado/**/xsim.dir/
 vivado/**/.Xil/
 
-# ---------- 仿真波形与日志（体积大，可由 testbench 重新生成）----------
+# ---------- 浠跨湡娉㈠舰涓庢棩蹇楋紙浣撶Н澶э紝鍙敱 testbench 閲嶆柊鐢熸垚锛?---------
 *.vcd
 *.wdb
 *.wcfg
@@ -30,13 +29,13 @@ vivado/**/.Xil/
 *.backup.jou
 *.backup.log
 
-# ---------- 比特流：只保留 board/sd_upload 下唯一一份 ----------
+# ---------- 姣旂壒娴侊細鍙繚鐣?board/sd_upload 涓嬪敮涓€涓€浠?----------
 board/bit/
 board/backup/
 vivado/**/*.bit
 vivado/**/*.ltx
 
-# ---------- 备份与临时工作区 ----------
+# ---------- 澶囦唤涓庝复鏃跺伐浣滃尯 ----------
 _backup/
 _work/
 handoff.zip
@@ -45,7 +44,7 @@ handoff.zip
 _dsh_write_test.txt
 ecg_new.txt
 
-# ---------- 板端采集的原始数据 ----------
+# ---------- 鏉跨閲囬泦鐨勫師濮嬫暟鎹?----------
 data/*.txt
 data/*.npy
 !data/README.md
@@ -57,13 +56,38 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 
-# ---------- 二进制文档（用 markdown 版本代替）----------
+# ---------- 浜岃繘鍒舵枃妗ｏ紙鐢?markdown 鐗堟湰浠ｆ浛锛?---------
 *.doc
 *.docx
 
-# ---------- 系统文件 ----------
+# ---------- 绯荤粺鏂囦欢 ----------
 Thumbs.db
 desktop.ini
 .DS_Store
 
 vivado/NA/
+# ---- 2026-11-06 清理后追加 ----
+# 个人竞赛资料（含中文名与承诺书扫描件，不入库）
+/嵌赛/
+
+# Vivado / 仿真 构建产物（可由 Tcl 脚本重建）
+*.vcd
+*.wdb
+*.dcp
+*.rpx
+*.jou
+*.str
+xsim.dir/
+.Xil/
+*.cache/
+*.gen/
+*.runs/
+*.sim/
+*.hw/
+.ip_user_files/
+
+# 临时文件
+_work/
+*.bak
+*.bak_*
+*.v1_*
